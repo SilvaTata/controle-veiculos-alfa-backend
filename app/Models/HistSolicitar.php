@@ -12,12 +12,15 @@ class HistSolicitar extends Model
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'solicitar_id',
+        'solicitacao_id',
         'hora_inicio',
         'data_inicio',
         'hora_final',
         'data_final',
-        'obs_users'
+        'obs_users',
+        'hora_aceito',
+        'data_aceito',
+        'adm_id'
     ];
 
     public function solicitar() 

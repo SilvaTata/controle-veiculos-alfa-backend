@@ -17,7 +17,7 @@ class CreateVeiculosTable extends Migration
             $table->id();
             $table->string('placa', 10)->unique();
             $table->string('chassi', 17)->unique();
-            $table->enum('status_veiculo', ['disponível', 'em uso', 'manutenção'])->default('disponível');
+            $table->enum('status_veiculo', ['disponível', 'reservado', 'em uso', 'manutenção'])->default('disponível');
             $table->string('qr_code', 100)->unique()->nullable();
             $table->integer('ano');
             $table->string('cor', 30);
