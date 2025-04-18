@@ -31,5 +31,10 @@ Route::middleware('auth:sanctum')->group(
         Route::post('solicitar/{id}/aceitarOuRecusar', [SolicitarController::class, 'aceitarOuRecusar']);
         Route::post('solicitar/{id}/iniciar', [SolicitarController::class, 'iniciar']);
         Route::post('solicitar/{id}/finalizar', [SolicitarController::class, 'finalizar']);
+        Route::get('/notifications', function () {
+            return response()->json([
+                'notifications' => auth()->user()->notifications
+            ], 200);
+        });
     }
 );

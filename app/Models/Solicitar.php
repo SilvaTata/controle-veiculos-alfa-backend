@@ -20,9 +20,10 @@ class Solicitar extends Model
         'prev_data_final',
         'motivo',
         'situacao',
-        'motivo_recusa'
+        'motivo_recusa',
+        'historico'
     ];
-    
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -42,5 +43,4 @@ class Solicitar extends Model
     {
         return $this->hasOne(HistVeiculo::class, 'solicitacao_id');
     }
-
 }

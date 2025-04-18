@@ -10,6 +10,7 @@ use App\Models\Veiculo;
 use App\Models\Solicitar;
 use App\Models\HistSolicitar;
 use App\Models\HistVeiculo;
+use App\Notifications\SolicitarNotify;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
@@ -19,29 +20,41 @@ class SolicitarController extends Controller
     public function index()
     {
         $user = Auth::user();
-        if (!$user) { return response()->json(['error' => 'Usuário não autenticado.'], 401); }
-        if ($user->cargo_id === null) { return response()->json(['error' => 'Cargo não encontrado.'], 404); }
+        if (!$user) {
+            return response()->json(['error' => 'Usuário não autenticado.'], 401);
+        }
+        if ($user->cargo_id === null) {
+            return response()->json(['error' => 'Cargo não encontrado.'], 404);
+        }
 
         if ($user->cargo_id === 1) {
-             $solicitacoes = Solicitar::whereIn('situacao', ['aceita', 'pendente']) // 'em_andamento' se usar
-                 ->with(['user', 'veiculo'])
-                 ->orderBy('prev_data_inicio', 'asc')->orderBy('prev_hora_inicio', 'asc')->get();
+            $solicitacoes = Solicitar::whereIn('situacao', ['aceita', 'pendente']) // 'em_andamento' se usar
+                ->with(['user', 'veiculo'])
+                ->orderBy('prev_data_inicio', 'asc')->orderBy('prev_hora_inicio', 'asc')->get();
             return response()->json(['message' => $solicitacoes->isEmpty() ? 'Nenhuma solicitação ativa encontrada.' : 'Solicitações encontradas com sucesso.', 'solicitacoes' => $solicitacoes], 200);
         } else {
-             $solicitacoesDoUsuario = Solicitar::where('user_id', $user->id)
-                 ->whereIn('situacao', ['aceita', 'pendente']) 
-                 ->with(['veiculo.marca', 'veiculo.modelo'])
-                 ->orderBy('prev_data_inicio', 'asc')->orderBy('prev_hora_inicio', 'asc')->get();
-             return response()->json(['message' => $solicitacoesDoUsuario->isEmpty() ? 'Você não possui solicitações ativas.' : 'Suas solicitações ativas.', 'solicitacoes' => $solicitacoesDoUsuario], 200);
+            $solicitacoesDoUsuario = Solicitar::where('user_id', $user->id)
+                ->whereIn('situacao', ['aceita', 'pendente'])
+                ->with(['veiculo', 'veiculo.marca', 'veiculo.modelo', 'user'])
+                ->orderBy('prev_data_inicio', 'asc')->orderBy('prev_hora_inicio', 'asc')->get();
+            return response()->json([
+                'message' => $solicitacoesDoUsuario->isEmpty() ? 'Você não possui solicitações ativas.' : 'Suas solicitações ativas.',
+                'solicitacoes' => $solicitacoesDoUsuario,
+                // 'user' => $user,
+            ], 200);
         }
     }
 
     public function show($id)
     {
-        $solicitar = Solicitar::with(['user','veiculo.marca','veiculo.modelo','histSolicitar','histVeiculo'])->find($id);
-        if (!$solicitar) { return response()->json(['error' => 'Solicitação não encontrada.'], 404); }
+        $solicitar = Solicitar::with(['user', 'veiculo.marca', 'veiculo.modelo', 'historico'])->find($id);
+        if (!$solicitar) {
+            return response()->json(['error' => 'Solicitação não encontrada.'], 404);
+        }
         $user = Auth::user();
-        if ($user->cargo_id !== 1 && $solicitar->user_id !== $user->id) { return response()->json(['error' => 'Acesso não autorizado.'], 403); }
+        if ($user->cargo_id !== 1 && $solicitar->user_id !== $user->id) {
+            return response()->json(['error' => 'Acesso não autorizado.'], 403);
+        }
         return response()->json(['message' => 'Busca realizada com sucesso', 'solicitar' => $solicitar], 200);
     }
 
@@ -60,7 +73,9 @@ class SolicitarController extends Controller
             'urgente' => 'sometimes|boolean',
         ]);
 
-        if ($validator->fails()) { return response()->json(['errors' => $validator->errors()], 422); }
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
         DB::beginTransaction();
         try {
@@ -75,6 +90,7 @@ class SolicitarController extends Controller
                     return response()->json(['message' => "Veículo (Placa: {$veiculo->placa}) não está disponível."], 409);
                 }
 
+
                 $now = Carbon::now();
                 $solicitar = Solicitar::create([
                     'user_id' => $user->id,
@@ -88,20 +104,20 @@ class SolicitarController extends Controller
 
                 HistSolicitar::create([
                     'solicitacao_id' => $solicitar->id,
-                    'urgente' => true,         
-                    'data_aceito' => $now,     
+                    'urgente' => true,
+                    'data_aceito' => $now,
                     'hora_aceito' => $now->toTimeString('minutes'),
-                    'data_inicio' => $now,     
+                    'data_inicio' => $now,
                     'hora_inicio' => $now->toTimeString('minutes'),
-                    'adm_id' => $user->id,    
+                    'adm_id' => $user->id,
                 ]);
                 Log::info("HistSolicitar created for urgent request {$solicitar->id}.");
 
                 HistVeiculo::create([
                     'solicitacao_id' => $solicitar->id,
                     'veiculo_id' => $veiculo->id,
-                    'km_inicio' => $request->input('km_inicial'), 
-                    'km_final' => 0, 
+                    'km_inicio' => $request->input('km_inicial'),
+                    'km_final' => 0,
                 ]);
                 Log::info("HistVeiculo created for request {$solicitar->id}.");
 
@@ -110,10 +126,28 @@ class SolicitarController extends Controller
                 Log::info("Vehicle {$veiculo->id} status updated to 'em uso'.");
 
                 DB::commit();
-                return response()->json(['message' => 'Solicitação urgente criada e viagem iniciada!','solicitacao' => $solicitar->load('veiculo')], 201);
 
-            }
-            else {
+                // Notificar todos os admins
+                $admins = User::where('cargo_id', 1)->get();
+                // Notificar todos os admins (parte URGENTE)
+                foreach ($admins as $admin) {
+                    $admin->notify(new SolicitarNotify(
+                        $solicitar, // Instância da solicitação
+                        'urgente_criada', // Tipo da notificação
+                        "Nova solicitação URGENTE criada por {$user->name}", // Mensagem
+                        [ // Detalhes extras
+                            'veiculo' => $veiculo->placa,
+                            'modelo' => $veiculo->modelo_id,
+                            'marca' => $veiculo->marca_id,
+                            'data_inicio' => $solicitar->prev_data_inicio,
+                            'data_final' => $solicitar->prev_data_final,
+                            'hora_inicio' => $solicitar->prev_hora_inicio,
+                            'hora_final' => $solicitar->prev_hora_final
+                        ]
+                    ));
+                }
+                return response()->json(['message' => 'Solicitação urgente criada e viagem iniciada!', 'solicitacao' => $solicitar->load('veiculo')], 201);
+            } else {
                 Log::info("Processing NORMAL request by User {$user->id} for Vehicle {$veiculo->id}");
                 if ($veiculo->status_veiculo === 'manutenção') {
                     DB::rollBack();
@@ -132,106 +166,203 @@ class SolicitarController extends Controller
                 ]);
                 Log::info("Normal request {$solicitar->id} created with status 'pendente'.");
                 DB::commit();
-                return response()->json(['message' => 'Solicitação criada e pendente de aprovação.','solicitacao' => $solicitar], 201);
-            }
 
+                // Notificar todos os admins
+                $admins = User::where('cargo_id', 1)->get();
+                // Notificar todos os admins (parte NORMAL)
+                foreach ($admins as $admin) {
+                    $admin->notify(new SolicitarNotify(
+                        $solicitar,
+                        'nova_solicitacao',
+                        "Nova solicitação pendente de {$user->name}",
+                        [
+                            'veiculo' => $veiculo->placa,
+                            'modelo' => $veiculo->modelo_id,
+                            'marca' => $veiculo->marca_id,
+                            'data_inicio' => $solicitar->prev_data_inicio,
+                            'data_final' => $solicitar->prev_data_final,
+                            'hora_inicio' => $solicitar->prev_hora_inicio,
+                            'hora_final' => $solicitar->prev_hora_final
+                        ]
+                    ));
+                }
+                return response()->json(['message' => 'Solicitação criada e pendente de aprovação.', 'solicitacao' => $solicitar], 201);
+            }
         } catch (\Exception $e) {
-             DB::rollBack();
-             Log::error('Erro ao criar solicitação: ' . $e->getMessage() . ' em ' . $e->getFile() . ':' . $e->getLine());
-             Log::error($e->getTraceAsString());
-             return response()->json(['error' => 'Erro interno ao processar a solicitação.','message' => $e->getMessage()], 500);
+            DB::rollBack();
+            Log::error('Erro ao criar solicitação: ' . $e->getMessage() . ' em ' . $e->getFile() . ':' . $e->getLine());
+            Log::error($e->getTraceAsString());
+            return response()->json(['error' => 'Erro interno ao processar a solicitação.', 'message' => $e->getMessage()], 500);
         }
     }
 
 
-     public function aceitarOuRecusar(Request $request, $id)
-     {
-         $user = Auth::user(); 
-         if ($user->cargo_id !== 1) { return response()->json(['error' => 'Acesso não autorizado.'], 403); }
+    public function aceitarOuRecusar(Request $request, $id)
+    {
+        $user = Auth::user();
+        if ($user->cargo_id !== 1) {
+            return response()->json(['error' => 'Acesso não autorizado.'], 403);
+        }
 
-         $solicitar = Solicitar::find($id);
-         if (!$solicitar) { return response()->json(['error' => 'Solicitação não encontrada.'], 404); }
-         if ($solicitar->situacao !== 'pendente') { return response()->json(['error' => 'Solicitação não está mais pendente.'], 409); }
+        $solicitar = Solicitar::find($id);
+        if (!$solicitar) {
+            return response()->json(['error' => 'Solicitação não encontrada.'], 404);
+        }
+        if ($solicitar->situacao !== 'pendente') {
+            return response()->json(['error' => 'Solicitação não está mais pendente.'], 409);
+        }
 
-         $validated = $request->validate(['button' => 'required|in:aceitar,recusar','motivo_recusa' => 'required_if:button,recusar|nullable|string|max:255']);
+        $validated = $request->validate(['button' => 'required|in:aceitar,recusar', 'motivo_recusa' => 'required_if:button,recusar|nullable|string|max:255']);
 
-         DB::beginTransaction();
-         try {
-             if ($validated['button'] === 'aceitar') {
-                 Log::info("Admin {$user->id} ACCEPTING request {$solicitar->id}");
-                 $veiculo = $solicitar->veiculo;
-                 if (!in_array($veiculo->status_veiculo, ['disponível', 'reservado'])) {
-                      DB::rollBack();
-                      Log::warning("Cannot accept request {$solicitar->id}: Vehicle {$veiculo->id} status is '{$veiculo->status_veiculo}'.");
-                      return response()->json(['error' => "Não é possível aceitar. O veículo está '{$veiculo->status_veiculo}'."], 409);
-                  }
+        DB::beginTransaction();
+        try {
+            if ($validated['button'] === 'aceitar') {
+                Log::info("Admin {$user->id} ACCEPTING request {$solicitar->id}");
+                $veiculo = $solicitar->veiculo;
+                if (!in_array($veiculo->status_veiculo, ['disponível', 'reservado'])) {
+                    DB::rollBack();
+                    Log::warning("Cannot accept request {$solicitar->id}: Vehicle {$veiculo->id} status is '{$veiculo->status_veiculo}'.");
+                    return response()->json(['error' => "Não é possível aceitar. O veículo está '{$veiculo->status_veiculo}'."], 409);
+                }
 
-                 $solicitar->situacao = 'aceita';
-                 $solicitar->adm_id = $user->id; 
-                 $solicitar->save();
-                 Log::info("Request {$solicitar->id} status updated to 'aceita'.");
+                $solicitar->situacao = 'aceita';
+                $solicitar->adm_id = $user->id;
+                $solicitar->save();
+                Log::info("Request {$solicitar->id} status updated to 'aceita'.");
 
-                 HistSolicitar::updateOrCreate(
-                     ['solicitacao_id' => $solicitar->id],
-                     [
-                         'urgente' => false, 
-                         'data_aceito' => now()->toDateString(), 
-                         'hora_aceito' => now()->toTimeString('minutes'), 
-                         'adm_id' => $user->id,
-                     ]
-                 );
-                  Log::info("HistSolicitar created/updated for accepted request {$solicitar->id}.");
+                HistSolicitar::updateOrCreate(
+                    ['solicitacao_id' => $solicitar->id],
+                    [
+                        'urgente' => false,
+                        'data_aceito' => now()->toDateString(),
+                        'hora_aceito' => now()->toTimeString('minutes'),
+                        'adm_id' => $user->id,
+                    ]
+                );
+                Log::info("HistSolicitar created/updated for accepted request {$solicitar->id}.");
 
-                 if ($veiculo->status_veiculo === 'disponível') {
-                     $veiculo->status_veiculo = 'reservado';
-                     $veiculo->save();
-                      Log::info("Vehicle {$veiculo->id} status updated to 'reservado'.");
-                 }
+                if ($veiculo->status_veiculo === 'disponível') {
+                    $veiculo->status_veiculo = 'reservado';
+                    $veiculo->save();
+                    Log::info("Vehicle {$veiculo->id} status updated to 'reservado'.");
+                }
 
-                 DB::commit();
-                 return response()->json(['message' => 'Solicitação aceita com sucesso.'], 200);
+                DB::commit();
 
-             } elseif ($validated['button'] === 'recusar') {
-                  Log::info("Admin {$user->id} REJECTING request {$solicitar->id}");
-                  $solicitar->situacao = 'recusada';
-                  $solicitar->motivo_recusa = $validated['motivo_recusa'];
-                  $solicitar->adm_id = $user->id; 
-                  $solicitar->data_recusa = now()->toDateString();
-                  $solicitar->hora_recusa = now()->toTimeString('minutes');
-                  $solicitar->save();
-                  Log::info("Request {$solicitar->id} status updated to 'recusada'.");
-                  DB::commit();
-                  return response()->json(['message' => 'Solicitação recusada com sucesso.'], 200);
-             }
-             DB::rollBack(); return response()->json(['error' => 'Ação inválida.'], 400);
+                // Notificar usuário
+                $solicitar->user->notify(new SolicitarNotify(
+                    $solicitar,
+                    'solicitacao_aceita',
+                    "Solicitação #{$solicitar->id} foi ACEITA",
+                    [
+                        'veiculo' => $veiculo->placa,
+                        'modelo' => $veiculo->modelo_id,
+                        'marca' => $veiculo->marca_id,
+                        'data_inicio' => $solicitar->prev_data_inicio,
+                        'data_final' => $solicitar->prev_data_final,
+                        'hora_inicio' => $solicitar->prev_hora_inicio,
+                        'hora_final' => $solicitar->prev_hora_final
+                    ]
+                ));
 
-         } catch (\Exception $e) {
-             DB::rollBack();
-             Log::error("Erro ao processar aceitar/recusar solicitação {$id}: " . $e->getMessage());
-             Log::error($e->getTraceAsString());
-             return response()->json(['error' => 'Erro interno ao processar a solicitação.','message' => $e->getMessage()], 500);
-         }
-     }
+                // Notificar admins
+                $admins = User::where('cargo_id', 1)->get();
+                foreach ($admins as $admin) {
+                    $admin->notify(new SolicitarNotify(
+                        $solicitar,
+                        'solicitacao_aceita_admin',
+                        "Solicitação #{$solicitar->id} aceita por {$user->name}",
+                        [
+                            'veiculo' => $veiculo->placa,
+                            'modelo' => $veiculo->modelo_id,
+                            'marca' => $veiculo->marca_id,
+                            'data_inicio' => $solicitar->prev_data_inicio,
+                            'data_final' => $solicitar->prev_data_final,
+                            'hora_inicio' => $solicitar->prev_hora_inicio,
+                            'hora_final' => $solicitar->prev_hora_final,
+                            'responsavel' => $user->name
+                        ]
+                    ));
+                }
+                return response()->json(['message' => 'Solicitação aceita com sucesso.'], 200);
+            } elseif ($validated['button'] === 'recusar') {
+                Log::info("Admin {$user->id} REJECTING request {$solicitar->id}");
+                $solicitar->situacao = 'recusada';
+                $solicitar->motivo_recusa = $validated['motivo_recusa'];
+                $solicitar->adm_id = $user->id;
+                $solicitar->data_recusa = now()->toDateString();
+                $solicitar->hora_recusa = now()->toTimeString('minutes');
+                $solicitar->save();
+                Log::info("Request {$solicitar->id} status updated to 'recusada'.");
+                DB::commit();
+
+                // Notificar usuário
+                $solicitar->user->notify(new SolicitarNotify(
+                    $solicitar,
+                    'solicitacao_recusada',
+                    "Solicitação #{$solicitar->id} foi RECUSADA",
+                    [
+                        'motivo' => $solicitar->motivo_recusa,
+                        // Adicione outros dados se necessário
+                    ]
+                ));
+
+                // Notificar admins
+                $admins = User::where('cargo_id', 1)->get();
+                foreach ($admins as $admin) {
+                    $admin->notify(new SolicitarNotify(
+                        $solicitar,
+                        'solicitacao_recusada_admin',
+                        "Solicitação #{$solicitar->id} recusada por {$user->name}",
+                        [
+                            'motivo' => $solicitar->motivo_recusa,
+                        ]
+                    ));
+                }
+
+                return response()->json(['message' => 'Solicitação recusada com sucesso.'], 200);
+            }
+            DB::rollBack();
+            return response()->json(['error' => 'Ação inválida.'], 400);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Erro ao processar aceitar/recusar solicitação {$id}: " . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return response()->json(['error' => 'Erro interno ao processar a solicitação.', 'message' => $e->getMessage()], 500);
+        }
+    }
 
     public function iniciar(Request $request, $id)
     {
         $user = Auth::user();
         $solicitar = Solicitar::find($id);
-        if (!$solicitar) { return response()->json(['error' => 'Solicitação não encontrada.'], 404); }
+        if (!$solicitar) {
+            return response()->json(['error' => 'Solicitação não encontrada.'], 404);
+        }
 
         $veiculo = $solicitar->veiculo;
-        if ($user->id !== $solicitar->user_id) { return response()->json(['error' => 'Acesso não autorizado.'], 403); }
-        if ($solicitar->situacao !== 'aceita') { return response()->json(['error' => 'Solicitação não está aceita.'], 409); }
+        if ($user->id !== $solicitar->user_id) {
+            return response()->json(['error' => 'Acesso não autorizado.'], 403);
+        }
+        if ($solicitar->situacao !== 'aceita') {
+            return response()->json(['error' => 'Solicitação não está aceita.'], 409);
+        }
 
         $histSolicitacao = HistSolicitar::where('solicitacao_id', $solicitar->id)->first();
-        if ($histSolicitacao && $histSolicitacao->data_inicio !== null) { return response()->json(['error' => 'Viagem já iniciada.'], 409); }
+        if ($histSolicitacao && $histSolicitacao->data_inicio !== null) {
+            return response()->json(['error' => 'Viagem já iniciada.'], 409);
+        }
 
-        $validator = Validator::make($request->all(), ['placa_confirmar' => 'required|string','km_velocimetro' => 'required|integer|min:0']);
-        if ($validator->fails()) { return response()->json(['errors' => $validator->errors()], 422); }
+        $validator = Validator::make($request->all(), ['placa_confirmar' => 'required|string', 'km_velocimetro' => 'required|integer|min:0']);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
         $placaRequestNormalizada = strtoupper(str_replace('-', '', $request->input('placa_confirmar')));
         $placaVeiculoNormalizada = strtoupper(str_replace('-', '', $veiculo->placa));
-        if ($placaRequestNormalizada !== $placaVeiculoNormalizada) { return response()->json(['message' => "Placa informada não confere."], 409); }
+        if ($placaRequestNormalizada !== $placaVeiculoNormalizada) {
+            return response()->json(['message' => "Placa informada não confere."], 409);
+        }
 
         DB::beginTransaction();
         try {
@@ -239,22 +370,22 @@ class SolicitarController extends Controller
             $kmInicial = $request->input('km_velocimetro');
 
             $histSoli = HistSolicitar::updateOrCreate(
-                 ['solicitacao_id' => $solicitar->id], 
-                 [ 
-                     'data_inicio' => $now,
-                     'hora_inicio' => $now->toTimeString('minutes'),
-                     'urgente' => false, 
-                 ]
+                ['solicitacao_id' => $solicitar->id],
+                [
+                    'data_inicio' => $now,
+                    'hora_inicio' => $now->toTimeString('minutes'),
+                    'urgente' => false,
+                ]
             );
             Log::info("HistSolicitar updated/created for started request {$solicitar->id}.");
 
-             HistVeiculo::create([
-                 'solicitacao_id' => $solicitar->id,
-                 'veiculo_id' => $veiculo->id,
-                 'km_inicio' => $kmInicial, 
-                 'km_final' => 0,
-             ]);
-             Log::info("HistVeiculo created for request {$solicitar->id}.");
+            HistVeiculo::create([
+                'solicitacao_id' => $solicitar->id,
+                'veiculo_id' => $veiculo->id,
+                'km_inicio' => $kmInicial,
+                'km_final' => 0,
+            ]);
+            Log::info("HistVeiculo created for request {$solicitar->id}.");
 
             $veiculo->status_veiculo = 'em uso';
             $veiculo->save();
@@ -262,14 +393,26 @@ class SolicitarController extends Controller
 
 
             DB::commit();
+            // Notificar admins
+            // $admins = User::where('cargo_id', 1)->get();
+            // foreach ($admins as $admin) {
+            //     $admin->notify(new SolicitarNotify(
+            //         $solicitar,
+            //         'viagem_iniciada',
+            //         "Viagem #{$solicitar->id} iniciada por {$user->name}",
+            //         [
+            //             'veiculo' => $veiculo->placa,
+            //             'km_inicial' => $kmInicial
+            //         ]
+            //     ));
+            // }
             Log::info("Request {$id} started successfully by User {$user->id}.");
             return response()->json(['message' => 'Viagem iniciada com sucesso!'], 200);
-
         } catch (\Exception $e) {
-             DB::rollBack();
-             Log::error("Error starting trip for Request {$id}: " . $e->getMessage());
-             Log::error($e->getTraceAsString());
-             return response()->json(['error' => 'Erro interno ao iniciar a viagem.','message' => $e->getMessage()], 500);
+            DB::rollBack();
+            Log::error("Error starting trip for Request {$id}: " . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return response()->json(['error' => 'Erro interno ao iniciar a viagem.', 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -277,29 +420,43 @@ class SolicitarController extends Controller
     {
         $user = Auth::user();
         $solicitar = Solicitar::with('veiculo')->find($id);
-        if (!$solicitar) { return response()->json(['error' => 'Solicitação não encontrada.'], 404); }
-        if ($user->id !== $solicitar->user_id) { return response()->json(['error' => 'Acesso não autorizado.'], 403); }
+        if (!$solicitar) {
+            return response()->json(['error' => 'Solicitação não encontrada.'], 404);
+        }
+        if ($user->id !== $solicitar->user_id) {
+            return response()->json(['error' => 'Acesso não autorizado.'], 403);
+        }
 
         $histSolicitacao = HistSolicitar::where('solicitacao_id', $solicitar->id)->first();
-        if (!$histSolicitacao || $histSolicitacao->data_inicio === null) { return response()->json(['error' => 'Viagem não iniciada.'], 409); }
-        if ($histSolicitacao->data_final !== null) { return response()->json(['error' => 'Viagem já finalizada.'], 409); }
+        if (!$histSolicitacao || $histSolicitacao->data_inicio === null) {
+            return response()->json(['error' => 'Viagem não iniciada.'], 409);
+        }
+        if ($histSolicitacao->data_final !== null) {
+            return response()->json(['error' => 'Viagem já finalizada.'], 409);
+        }
 
-        $validator = Validator::make($request->all(), ['placa_confirmar' => 'required|string','km_velocimetro' => 'required|integer|min:0','obs_users' => 'nullable|string|max:500']);
-        if ($validator->fails()) { return response()->json(['errors' => $validator->errors()], 422); }
+        $validator = Validator::make($request->all(), ['placa_confirmar' => 'required|string', 'km_velocimetro' => 'required|integer|min:0', 'obs_users' => 'nullable|string|max:500']);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
         $veiculo = $solicitar->veiculo;
         $placaRequestNormalizada = strtoupper(str_replace('-', '', $request->input('placa_confirmar')));
         $placaVeiculoNormalizada = strtoupper(str_replace('-', '', $veiculo->placa));
-        if ($placaRequestNormalizada !== $placaVeiculoNormalizada) { return response()->json(['message' => "Placa informada não confere."], 409); }
+        if ($placaRequestNormalizada !== $placaVeiculoNormalizada) {
+            return response()->json(['message' => "Placa informada não confere."], 409);
+        }
 
         $histVeiculo = HistVeiculo::where('solicitacao_id', $solicitar->id)->first();
         if (!$histVeiculo) {
-             Log::error("Critical: HistVeiculo not found for request {$solicitar->id} during finalization!");
-             return response()->json(['error' => 'Erro interno: dados de KM inicial não encontrados.'], 500);
+            Log::error("Critical: HistVeiculo not found for request {$solicitar->id} during finalization!");
+            return response()->json(['error' => 'Erro interno: dados de KM inicial não encontrados.'], 500);
         }
         $kmInicial = $histVeiculo->km_inicio;
         $kmFinal = $request->input('km_velocimetro');
-        if ($kmFinal < $kmInicial) { return response()->json(['message' => "KM final ({$kmFinal}) menor que o inicial ({$kmInicial})."], 400); }
+        if ($kmFinal < $kmInicial) {
+            return response()->json(['message' => "KM final ({$kmFinal}) menor que o inicial ({$kmInicial})."], 400);
+        }
 
         DB::beginTransaction();
         try {
@@ -312,7 +469,7 @@ class SolicitarController extends Controller
             $histSolicitacao->save();
             Log::info("HistSolicitar updated for finalized request {$solicitar->id}.");
 
-            $histVeiculo->km_final = $kmFinal; 
+            $histVeiculo->km_final = $kmFinal;
             $histVeiculo->save();
             Log::info("HistVeiculo updated for request {$solicitar->id}. KM spent: {$kmGasto}");
 
@@ -324,21 +481,47 @@ class SolicitarController extends Controller
             $veiculo->km_atual = $kmFinal;
             $veiculo->km_revisao = $veiculo->km_revisao - $kmGasto;
             if ($veiculo->km_revisao <= 0) {
-                $veiculo->km_revisao = 10000; 
-                $veiculo->status_veiculo = 'manutenção'; 
+                $veiculo->km_revisao = 10000;
+                $veiculo->status_veiculo = 'manutenção';
             }
             $veiculo->save();
             Log::info("Vehicle {$veiculo->id} status updated to '{$veiculo->status_veiculo}'.");
 
             DB::commit();
-            Log::info("Request {$id} finalized successfully by User {$user->id}.");
-            return response()->json(['message' => 'Veículo devolvido com sucesso.','km_rodado' => $kmGasto], 200);
+            // Notificar usuário
+            $solicitar->user->notify(new SolicitarNotify(
+                $solicitar,
+                'viagem_concluida',
+                "Viagem #{$solicitar->id} concluída com sucesso",
+                [
+                    'km_rodado' => $kmGasto,
+                    'veiculo' => $veiculo->placa,
+                    'modelo' => $veiculo->modelo->nome,
+                    'marca' => $veiculo->marca->nome
+                ]
+            ));
 
+            // Notificar admins
+            $admins = User::where('cargo_id', 1)->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new SolicitarNotify(
+                    $solicitar,
+                    'viagem_concluida_admin',
+                    "Viagem #{$solicitar->id} finalizada por {$user->name}",
+                    [
+                        'km_rodado' => $kmGasto,
+                        'status_veiculo' => $veiculo->status_veiculo,
+                        'veiculo' => $veiculo->placa
+                    ]
+                ));
+            }
+            Log::info("Request {$id} finalized successfully by User {$user->id}.");
+            return response()->json(['message' => 'Veículo devolvido com sucesso.', 'km_rodado' => $kmGasto], 200);
         } catch (\Exception $e) {
-             DB::rollBack();
-             Log::error("Error finalizing request {$id}: " . $e->getMessage());
-             Log::error($e->getTraceAsString());
-             return response()->json(['error' => 'Erro interno ao finalizar a viagem.','message' => $e->getMessage()], 500);
+            DB::rollBack();
+            Log::error("Error finalizing request {$id}: " . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return response()->json(['error' => 'Erro interno ao finalizar a viagem.', 'message' => $e->getMessage()], 500);
         }
     }
 }
