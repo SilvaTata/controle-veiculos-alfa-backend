@@ -13,6 +13,7 @@ class HistSolicitar extends Model
 
     protected $fillable = [
         'solicitacao_id',
+        'urgente',
         'hora_inicio',
         'data_inicio',
         'hora_final',

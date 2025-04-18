@@ -24,6 +24,7 @@ class CreateVeiculosTable extends Migration
             $table->integer('capacidade');
             $table->text('obs_veiculo')->nullable();
             $table->integer('km_revisao')->default(10000);
+            $table->integer('km_atual')->default(0);
             $table->foreignId('marca_id')->constrained('marcas');
             $table->foreignId('modelo_id')->constrained('modelos');
             $table->timestamps();

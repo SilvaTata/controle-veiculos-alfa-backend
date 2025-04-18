@@ -16,8 +16,9 @@ class CreateHistSolicitarsTable extends Migration
         Schema::create('hist_solicitars', function (Blueprint $table) {
             $table->id();
             $table->foreignid('solicitacao_id')->constrained('solicitars')->onDelete('cascade')->unique();
-            $table->time('hora_aceito');
-            $table->date('data_aceito');
+            $table->boolean('urgente')->default(false);
+            $table->time('hora_aceito')->nullable();
+            $table->date('data_aceito')->nullable();
             $table->foreignId('adm_id')->constrained('users');
             $table->time('hora_inicio')->default('00:00:00');
             $table->date('data_inicio')->nullable();
