@@ -26,6 +26,6 @@ class HistSolicitar extends Model
 
     public function solicitacao()
     {
-        return $this->belongsTo(solicitar::class, 'solicitacao_id');
+        return $this->belongsTo(solicitar::class, 'solicitacao_id', 'id');
     }
 }

@@ -353,7 +353,7 @@ class SolicitarController extends Controller
             return response()->json(['error' => 'Viagem já iniciada.'], 409);
         }
 
-        $validator = Validator::make($request->all(), ['placa_confirmar' => 'required|string', 'km_velocimetro' => 'required|integer|min:0']);
+        $validator = Validator::make($request->all(), ['placa_confirmar' => 'required|string', 'km_inicio' => 'required|integer|min:0']);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -367,7 +367,7 @@ class SolicitarController extends Controller
         DB::beginTransaction();
         try {
             $now = Carbon::now();
-            $kmInicial = $request->input('km_velocimetro');
+            $kmInicial = $request->input('km_inicio');
 
             $histSoli = HistSolicitar::updateOrCreate(
                 ['solicitacao_id' => $solicitar->id],
@@ -435,7 +435,7 @@ class SolicitarController extends Controller
             return response()->json(['error' => 'Viagem já finalizada.'], 409);
         }
 
-        $validator = Validator::make($request->all(), ['placa_confirmar' => 'required|string', 'km_velocimetro' => 'required|integer|min:0', 'obs_users' => 'nullable|string|max:500']);
+        $validator = Validator::make($request->all(), ['placa_confirmar' => 'required|string', 'km_final' => 'required|integer|min:0', 'obs_users' => 'nullable|string|max:500']);
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
@@ -453,7 +453,7 @@ class SolicitarController extends Controller
             return response()->json(['error' => 'Erro interno: dados de KM inicial não encontrados.'], 500);
         }
         $kmInicial = $histVeiculo->km_inicio;
-        $kmFinal = $request->input('km_velocimetro');
+        $kmFinal = $request->input('km_final');
         if ($kmFinal < $kmInicial) {
             return response()->json(['message' => "KM final ({$kmFinal}) menor que o inicial ({$kmInicial})."], 400);
         }
