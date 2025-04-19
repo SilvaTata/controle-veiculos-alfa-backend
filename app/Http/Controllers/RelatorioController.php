@@ -15,39 +15,38 @@ class RelatorioController extends Controller
 
         $query = Solicitar::query();
 
-        // Admin vê tudo, usuário vê só suas solicitações
-        if ($user->role !== 'admin') {
-            $query->where('user_id', $user->id);
+        if ($user->cargo_id === 1) {
+            $registros = $query->where('situacao', 'concluída')->with(['veiculo', 'veiculo.marca', 'veiculo.modelo', 'user', 'historico', 'hist_veiculo'])->get();
+            return response()->json(['registros' => $registros, 'message' => 'Registros encontrados!'], 200);
         }
 
-        // Filtro por ID de solicitação se enviado
-        if ($request->has('solicitacao_id')) {
-            $query->where('id', $request->solicitacao_id);
+        if ($user->cargo_id === 2) {
+            $registros = $query->where('situacao', 'concluída')->with(['veiculo', 'veiculo.marca', 'veiculo.modelo', 'user', 'historico', 'hist_veiculo'])->get();
+            return response()->json([
+                'message' => $registros->isEmpty() ? 'Você não possui solicitações ativas.' : 'Suas solicitações ativas.',
+                'registros' => $registros,
+                // 'user' => $user,
+            ], 200);
         }
-
-        $registros = $query->with(['veiculo', 'user'])->orderBy('created_at', 'desc')->get();
-
-        return response()->json($registros);
     }
 
-    public function downloadPdf(Request $request)
-    {
-        $user = Auth::user();
+    // public function downloadPdf(Request $request)
+    // {
+    //     $user = Auth::user();
 
-        $query = Solicitar::query();
+    //     $query = Solicitar::query();
 
-        if ($user->role !== 'admin') {
-            $query->where('user_id', $user->id);
-        }
+    //     if ($user->role !== 'admin') {
+    //         $query->where('user_id', $user->id);
+    //     }
 
-        if ($request->has('solicitacao_id')) {
-            $query->where('id', $request->solicitacao_id);
-        }
+    //     if ($request->has('solicitacao_id')) {
+    //         $query->where('id', $request->solicitacao_id);
+    //     }
 
-        $registros = $query->with(['veiculo', 'user'])->get();
+    //     $registros = $query->with(['veiculo', 'user'])->get();
 
-        $pdf = Pdf::loadView('pdf.relatorio_veiculos', compact('registros'));
-        return $pdf->download('relatorio_veiculos.pdf');
-    }
+    //     $pdf = Pdf::loadView('pdf.relatorio_veiculos', compact('registros'));
+    //     return $pdf->download('relatorio_veiculos.pdf');
+    // }
 }
-
