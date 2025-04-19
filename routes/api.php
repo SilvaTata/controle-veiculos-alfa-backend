@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VeiculoController;
 use App\Http\Controllers\SolicitarController;
 use App\Http\Controllers\QrCodeScanController;
+use App\Http\Controllers\RelatorioController;
 
 Route::get('/users', [AuthController::class, 'users']);
 
@@ -31,6 +32,7 @@ Route::middleware('auth:sanctum')->group(
         Route::post('solicitar/{id}/aceitarOuRecusar', [SolicitarController::class, 'aceitarOuRecusar']);
         Route::post('solicitar/{id}/iniciar', [SolicitarController::class, 'iniciar']);
         Route::post('solicitar/{id}/finalizar', [SolicitarController::class, 'finalizar']);
+        Route::get('/relatorio-veiculos', [RelatorioController::class, 'index']);
         Route::get('/notifications', function () {
             return response()->json([
                 'notifications' => auth()->user()->notifications
