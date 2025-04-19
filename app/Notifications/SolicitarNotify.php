@@ -3,6 +3,8 @@
 namespace App\Notifications;
 
 use App\Models\Solicitar;
+use App\Models\User;
+use App\Models\Veiculo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\BroadcastMessage;
@@ -16,9 +18,13 @@ class SolicitarNotify extends Notification implements ShouldQueue
     protected $tipo;
     protected $mensagem;
     protected $detalhes;
+    protected $veiculo;
+    protected $user;
 
     public function __construct(
         Solicitar $solicitacao,
+        Veiculo $veiculo,
+        User $user,
         string $tipo,
         string $mensagem,
         array $detalhes = []
@@ -27,6 +33,8 @@ class SolicitarNotify extends Notification implements ShouldQueue
         $this->tipo = $tipo;
         $this->mensagem = $mensagem;
         $this->detalhes = $detalhes;
+        $this->veiculo = $veiculo;
+        $this->user = $user;
     }
 
 
@@ -43,10 +51,10 @@ class SolicitarNotify extends Notification implements ShouldQueue
             'message' => $this->mensagem,
             'data' => array_merge(
                 [
-                    'usuario' => $this->solicitacao->user->only('id', 'name'),
-                    'veiculo' => $this->solicitacao->veiculo->only('placa', 'cor', 'ano'),
-                    'modelo' => $this->solicitacao->veiculo->modelo->modelo,
-                    'marca' => $this->solicitacao->veiculo->marca->marca,
+                    'user' => $this->user->only('id', 'name'),
+                    'veiculo' => $this->veiculo->only('placa', 'cor', 'ano'),
+                    'modelo' => $this->veiculo->load('modelo'),
+                    'marca' => $this->veiculo->load('marca'),
                     'data_inicio' => $this->solicitacao->prev_data_inicio,
                     'data_final' => $this->solicitacao->prev_data_final,
                     'hora_inicio' => $this->solicitacao->prev_hora_inicio,
@@ -67,12 +75,19 @@ class SolicitarNotify extends Notification implements ShouldQueue
             'solicitacao_id' => $this->solicitacao->id,
             'detalhes' => array_merge(
                 [
-                    'user_id' => $this->solicitacao->user_id,
-                    'veiculo_id' => $this->solicitacao->veiculo_id,
-                    'data' => $this->solicitacao->prev_data_inicio
+                    'user' => $this->user->only('id', 'name'),
+                    'veiculo' => $this->veiculo->only('placa', 'cor', 'ano'),
+                    'modelo' => $this->veiculo->only('modelo'),
+                    'marca' => $this->veiculo->only('marca'),
+                    'data_inicio' => $this->solicitacao->prev_data_inicio,
+                    'data_final' => $this->solicitacao->prev_data_final,
+                    'hora_inicio' => $this->solicitacao->prev_hora_inicio,
+                    'hora_final' => $this->solicitacao->prev_hora_final,
+                    'solicitacao' => $this->solicitacao
                 ],
-                $this->detalhes
-            )
+                $this->detalhes,
+            ),
+            'created_at' => now()->toDateTimeString(),
         ];
     }
 }

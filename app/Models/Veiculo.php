@@ -22,15 +22,16 @@ class Veiculo extends Model
         'obs_veiculo',
         'km_revisao',
         'marca_id',
-        'modelo_id'
+        'modelo_id',
+        'hist_veiculo'
     ];
 
-    public function marca() 
+    public function marca()
     {
         return $this->belongsTo(Marca::class);
     }
 
-    public function modelo() 
+    public function modelo()
     {
         return $this->belongsTo(Modelo::class);
     }
@@ -45,7 +46,7 @@ class Veiculo extends Model
         return $this->belongsTo(Solicitar::class, 'solicitacao_id');
     }
 
-    public function historico()
+    public function hist_veiculo()
     {
         return $this->hasOne(HistVeiculo::class, 'veiculo_id');
     }

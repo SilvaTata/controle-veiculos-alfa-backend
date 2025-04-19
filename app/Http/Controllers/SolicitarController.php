@@ -47,7 +47,7 @@ class SolicitarController extends Controller
 
     public function show($id)
     {
-        $solicitar = Solicitar::with(['user', 'veiculo.marca', 'veiculo.modelo', 'historico'])->find($id);
+        $solicitar = Solicitar::with(['user', 'veiculo.marca', 'veiculo.modelo', 'historico', 'hist_veiculo'])->find($id);
         if (!$solicitar) {
             return response()->json(['error' => 'Solicitação não encontrada.'], 404);
         }
@@ -132,17 +132,16 @@ class SolicitarController extends Controller
                 // Notificar todos os admins (parte URGENTE)
                 foreach ($admins as $admin) {
                     $admin->notify(new SolicitarNotify(
-                        $solicitar, // Instância da solicitação
-                        'urgente_criada', // Tipo da notificação
-                        "Nova solicitação URGENTE criada por {$user->name}", // Mensagem
-                        [ // Detalhes extras
-                            'veiculo' => $veiculo->placa,
-                            'modelo' => $veiculo->modelo_id,
-                            'marca' => $veiculo->marca_id,
-                            'data_inicio' => $solicitar->prev_data_inicio,
-                            'data_final' => $solicitar->prev_data_final,
-                            'hora_inicio' => $solicitar->prev_hora_inicio,
-                            'hora_final' => $solicitar->prev_hora_final
+                        $solicitar,    // Solicitação
+                        $veiculo,      // Instância do Veículo
+                        $user,         // Instância do User
+                        'urgente_criada',
+                        "Nova solicitação URGENTE criada por {$user->name}",
+                        [ // Detalhes simplificados
+                            'data_inicio' => $now->toDateTimeString(),
+                            'placa' => $veiculo->placa,
+                            'modelo' => $veiculo->load('modelo'),
+                            'marca' => $veiculo->load('marca'),
                         ]
                     ));
                 }
@@ -172,17 +171,13 @@ class SolicitarController extends Controller
                 // Notificar todos os admins (parte NORMAL)
                 foreach ($admins as $admin) {
                     $admin->notify(new SolicitarNotify(
-                        $solicitar,
-                        'nova_solicitacao',
+                        $solicitar,    // Solicitação
+                        $veiculo,      // Veículo
+                        $user,         // User
+                        'nova_solicitacao', // Tipo correto
                         "Nova solicitação pendente de {$user->name}",
-                        [
-                            'veiculo' => $veiculo->placa,
-                            'modelo' => $veiculo->modelo_id,
-                            'marca' => $veiculo->marca_id,
-                            'data_inicio' => $solicitar->prev_data_inicio,
-                            'data_final' => $solicitar->prev_data_final,
-                            'hora_inicio' => $solicitar->prev_hora_inicio,
-                            'hora_final' => $solicitar->prev_hora_final
+                        [ // Detalhes ajustados
+                            'periodo' => "{$solicitar->prev_data_inicio} {$solicitar->prev_hora_inicio} - {$solicitar->prev_data_final} {$solicitar->prev_hora_final}"
                         ]
                     ));
                 }
@@ -252,12 +247,14 @@ class SolicitarController extends Controller
                 // Notificar usuário
                 $solicitar->user->notify(new SolicitarNotify(
                     $solicitar,
+                    $veiculo,
+                    $user,
                     'solicitacao_aceita',
                     "Solicitação #{$solicitar->id} foi ACEITA",
                     [
-                        'veiculo' => $veiculo->placa,
-                        'modelo' => $veiculo->modelo_id,
-                        'marca' => $veiculo->marca_id,
+
+                        'modelo' => $veiculo->load('modelo'),
+                        'marca' => $veiculo->load('marca'),
                         'data_inicio' => $solicitar->prev_data_inicio,
                         'data_final' => $solicitar->prev_data_final,
                         'hora_inicio' => $solicitar->prev_hora_inicio,
@@ -269,18 +266,14 @@ class SolicitarController extends Controller
                 $admins = User::where('cargo_id', 1)->get();
                 foreach ($admins as $admin) {
                     $admin->notify(new SolicitarNotify(
-                        $solicitar,
-                        'solicitacao_aceita_admin',
+                        $solicitar,    // Solicitação
+                        $veiculo,      // Veículo
+                        $user,         // Admin que aprovou
+                        'solicitacao_aceita_admin', // Tipo correto
                         "Solicitação #{$solicitar->id} aceita por {$user->name}",
-                        [
-                            'veiculo' => $veiculo->placa,
-                            'modelo' => $veiculo->modelo_id,
-                            'marca' => $veiculo->marca_id,
-                            'data_inicio' => $solicitar->prev_data_inicio,
-                            'data_final' => $solicitar->prev_data_final,
-                            'hora_inicio' => $solicitar->prev_hora_inicio,
-                            'hora_final' => $solicitar->prev_hora_final,
-                            'responsavel' => $user->name
+                        [ // Detalhes essenciais
+                            'responsavel' => $user->name,
+                            'status_veiculo' => $veiculo->status_veiculo
                         ]
                     ));
                 }
@@ -298,12 +291,14 @@ class SolicitarController extends Controller
 
                 // Notificar usuário
                 $solicitar->user->notify(new SolicitarNotify(
-                    $solicitar,
+                    $solicitar,          // 1º parâmetro: Solicitação
+                    $solicitar->veiculo, // 2º parâmetro: Veículo
+                    $user,               // 3º parâmetro: Admin que recusou
                     'solicitacao_recusada',
                     "Solicitação #{$solicitar->id} foi RECUSADA",
                     [
                         'motivo' => $solicitar->motivo_recusa,
-                        // Adicione outros dados se necessário
+                        'admin' => $user->name // Adicionei o nome do responsável
                     ]
                 ));
 
@@ -311,11 +306,14 @@ class SolicitarController extends Controller
                 $admins = User::where('cargo_id', 1)->get();
                 foreach ($admins as $admin) {
                     $admin->notify(new SolicitarNotify(
-                        $solicitar,
-                        'solicitacao_recusada_admin',
+                        $solicitar,          // Solicitação
+                        $solicitar->veiculo, // Veículo 
+                        $user,               // Admin que recusou
+                        'solicitacao_recusada_admin', // Tipo corrigido
                         "Solicitação #{$solicitar->id} recusada por {$user->name}",
                         [
                             'motivo' => $solicitar->motivo_recusa,
+                            'responsavel' => $user->name // Dado adicional
                         ]
                     ));
                 }
@@ -335,7 +333,7 @@ class SolicitarController extends Controller
     public function iniciar(Request $request, $id)
     {
         $user = Auth::user();
-        $solicitar = Solicitar::find($id);
+        $solicitar = Solicitar::with(['user', 'veiculo.marca', 'veiculo.modelo', 'historico', 'hist_veiculo'])->find($id);
         if (!$solicitar) {
             return response()->json(['error' => 'Solicitação não encontrada.'], 404);
         }
@@ -391,23 +389,12 @@ class SolicitarController extends Controller
             $veiculo->save();
             Log::info("Vehicle {$veiculo->id} status updated to 'em uso'.");
 
+            $solicitar->load(['user', 'veiculo.marca', 'veiculo.modelo', 'historico', 'hist_veiculo']);
+
 
             DB::commit();
-            // Notificar admins
-            // $admins = User::where('cargo_id', 1)->get();
-            // foreach ($admins as $admin) {
-            //     $admin->notify(new SolicitarNotify(
-            //         $solicitar,
-            //         'viagem_iniciada',
-            //         "Viagem #{$solicitar->id} iniciada por {$user->name}",
-            //         [
-            //             'veiculo' => $veiculo->placa,
-            //             'km_inicial' => $kmInicial
-            //         ]
-            //     ));
-            // }
             Log::info("Request {$id} started successfully by User {$user->id}.");
-            return response()->json(['message' => 'Viagem iniciada com sucesso!'], 200);
+            return response()->json(['message' => 'Viagem iniciada com sucesso!', 'solicitar' => $solicitar], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Error starting trip for Request {$id}: " . $e->getMessage());
@@ -489,29 +476,31 @@ class SolicitarController extends Controller
 
             DB::commit();
             // Notificar usuário
-            $solicitar->user->notify(new SolicitarNotify(
-                $solicitar,
-                'viagem_concluida',
-                "Viagem #{$solicitar->id} concluída com sucesso",
-                [
-                    'km_rodado' => $kmGasto,
-                    'veiculo' => $veiculo->placa,
-                    'modelo' => $veiculo->modelo->nome,
-                    'marca' => $veiculo->marca->nome
-                ]
-            ));
+            // $solicitar->user->notify(new SolicitarNotify(
+            //     $solicitar,
+            //     'viagem_concluida',
+            //     "Viagem #{$solicitar->id} concluída com sucesso",
+            //     [
+            //         'km_rodado' => $kmGasto,
+            //         'veiculo' => $veiculo->placa,
+            //         'modelo' => $veiculo->modelo->nome,
+            //         'marca' => $veiculo->marca->nome
+            //     ]
+            // ));
 
             // Notificar admins
             $admins = User::where('cargo_id', 1)->get();
             foreach ($admins as $admin) {
                 $admin->notify(new SolicitarNotify(
-                    $solicitar,
+                    $solicitar,    // Solicitação
+                    $veiculo,      // Veículo
+                    $user,         // User que finalizou
                     'viagem_concluida_admin',
                     "Viagem #{$solicitar->id} finalizada por {$user->name}",
-                    [
+                    [ // Dados consolidados
                         'km_rodado' => $kmGasto,
-                        'status_veiculo' => $veiculo->status_veiculo,
-                        'veiculo' => $veiculo->placa
+                        'status_final' => $veiculo->status_veiculo,
+                        'proxima_revisao' => $veiculo->km_revisao
                     ]
                 ));
             }

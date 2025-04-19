@@ -21,7 +21,8 @@ class Solicitar extends Model
         'motivo',
         'situacao',
         'motivo_recusa',
-        'historico'
+        'historico',
+        'hist_veiculo'
     ];
 
     public function user()
@@ -39,7 +40,7 @@ class Solicitar extends Model
         return $this->hasOne(HistSolicitar::class, 'solicitacao_id');
     }
 
-    public function histVeiculo()
+    public function hist_veiculo()
     {
         return $this->hasOne(HistVeiculo::class, 'solicitacao_id');
     }
