@@ -15,18 +15,28 @@ class RelatorioController extends Controller
 
         $query = Solicitar::query();
 
-        if ($user->cargo_id === 1) {
-            $registros = $query->where('situacao', 'concluída')->with(['veiculo', 'veiculo.marca', 'veiculo.modelo', 'user', 'historico', 'hist_veiculo'])->get();
-            return response()->json(['registros' => $registros, 'message' => 'Registros encontrados!'], 200);
-        }
+        try {
+            if (!$user) {
+                return response()->json(['error' => 'Usuário não autenticado'], 401);
+            }
+            if ($user->cargo_id === 1) {
+                $registros = $query->where('situacao', 'concluída')->with(['veiculo', 'veiculo.marca', 'veiculo.modelo', 'user', 'historico', 'hist_veiculo'])->get();
+                return response()->json(['registros' => $registros, 'message' => 'Registros encontrados!'], 200);
+            }
 
-        if ($user->cargo_id === 2) {
-            $registros = $query->where('situacao', 'concluída')->with(['veiculo', 'veiculo.marca', 'veiculo.modelo', 'user', 'historico', 'hist_veiculo'])->get();
-            return response()->json([
-                'message' => $registros->isEmpty() ? 'Você não possui solicitações ativas.' : 'Suas solicitações ativas.',
-                'registros' => $registros,
-                // 'user' => $user,
-            ], 200);
+            if ($user->cargo_id === 2) {
+                $registros = $query->where([
+                    ['situacao', '=', 'concluída'],
+                    ['user_id', '=', $user->id]
+                ])->with(['veiculo', 'veiculo.marca', 'veiculo.modelo', 'user', 'historico', 'hist_veiculo'])->get();
+                return response()->json([
+                    'message' => $registros->isEmpty() ? 'Você não possui solicitações ativas.' : 'Suas solicitações ativas.',
+                    'registros' => $registros,
+                    // 'user' => $user,
+                ], 200);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 

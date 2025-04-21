@@ -51,7 +51,7 @@ class SolicitarNotify extends Notification implements ShouldQueue
             'message' => $this->mensagem,
             'data' => array_merge(
                 [
-                    'user' => $this->user->only('id', 'name'),
+                    'user' => $this->user->only('id', 'name', 'cargo_id'),
                     'veiculo' => $this->veiculo->only('placa', 'cor', 'ano'),
                     'modelo' => $this->veiculo->load('modelo'),
                     'marca' => $this->veiculo->load('marca'),
