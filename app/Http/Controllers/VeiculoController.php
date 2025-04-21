@@ -43,6 +43,7 @@ class VeiculoController extends Controller
             'capacidade' => 'required|numeric',
             'obs_veiculo' => 'nullable|string',
             'km_revisao' => 'nullable|numeric',
+            'km_atual' => 'nullable|numeric',
             'marca' => 'required|string',
             'modelo' => 'required|string',
         ]);
@@ -69,6 +70,7 @@ class VeiculoController extends Controller
                 'capacidade' => $data['capacidade'],
                 'obs_veiculo' => $data['obs_veiculo'],
                 'km_revisao' => $data['km_revisao'],
+                'km_atual' => $data['km_atual'],
                 'marca_id' => $marca->id,
                 'modelo_id' => $modelo->id,
             ]);

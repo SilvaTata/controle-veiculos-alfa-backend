@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule; 
 
 class AuthController extends Controller
 {
@@ -18,7 +19,6 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        // dd($request);
         $data = $request->validate([
             'cpf' => 'required|string|unique:users,cpf',
             'name' => 'required|string',
@@ -58,10 +58,9 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             
-            // Depuração: Mostra o erro exato no terminal/log
             return response()->json([
                 'error' => 'Erro ao registrar usuário.',
-                'message' => $e->getMessage() // Retorna a mensagem de erro real
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -71,14 +70,25 @@ class AuthController extends Controller
         $request->validate([
             'cpf' => 'required|string',
             'password' => 'required|string',
+            'cargo_id' => [
+                'required',         
+                'integer',         
+                Rule::in([1, 2]), 
+            ],
         ]);
 
         $user = User::where('cpf', $request->cpf)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)  || $user->cargo_id !== $request->cargo_id ) {
             throw ValidationException::withMessages([
-                'cpf' => ['As credenciais estão incorretas.'],
+                'cpf' => ['As credenciais (CPF, Senha ou Cargo) estão incorretas.'],
             ]);
+        }
+
+        if ($user->status !== 'ativo') { 
+             throw ValidationException::withMessages([
+                'cpf' => ['Este usuário está inativo.'],
+             ]);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;

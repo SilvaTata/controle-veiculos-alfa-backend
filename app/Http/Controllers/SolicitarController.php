@@ -66,7 +66,7 @@ class SolicitarController extends Controller
             'veiculo_id' => 'required|exists:veiculos,id',
             'prev_hora_inicio' => 'required_without:urgente|date_format:H:i',
             'prev_data_inicio' => 'required_without:urgente|date_format:Y-m-d',
-            'prev_hora_final' => 'required_without:urgente|date_format:H:i|after:prev_hora_inicio',
+            'prev_hora_final' => 'required_without:urgente|date_format:H:i',
             'prev_data_final' => 'required_without:urgente|date_format:Y-m-d|after_or_equal:prev_data_inicio',
             'motivo' => 'required_if:urgente,true|nullable|string|max:500',
             'km_inicial' => 'required_if:urgente,true|nullable|integer|min:0',
@@ -99,6 +99,8 @@ class SolicitarController extends Controller
                     'motivo' => $request->input('motivo'),
                     'prev_data_inicio' => $now->toDateString(),
                     'prev_hora_inicio' => $now->toTimeString('minutes'),
+                    'prev_data_final' => $now->toDateString(),
+                    'prev_hora_final' => $now->toTimeString('minutes'),
                 ]);
                 Log::info("Urgent request {$solicitar->id} created in solicitars table.");
 
