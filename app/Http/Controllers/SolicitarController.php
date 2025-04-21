@@ -472,6 +472,23 @@ class SolicitarController extends Controller
             if ($veiculo->km_revisao <= 0) {
                 $veiculo->km_revisao = 10000;
                 $veiculo->status_veiculo = 'manutenção';
+
+                $admins = User::where('cargo_id', 1)->get();
+            foreach ($admins as $admin) {
+                    $admin->notify(new SolicitarNotify(
+                        $solicitar,
+                        $veiculo,
+                        $user,
+                        'manutencao_preventiva',
+                        "O veículo {$veiculo->placa} entrou em manutenção preventiva após a viagem #{$solicitar->id}",
+                        [
+                            'km_rodado' => $kmGasto,
+                            'status_final' => $veiculo->status_veiculo,
+                            'proxima_revisao' => $veiculo->km_revisao,
+                            'motivo' => 'Limite de KM para revisão atingido'
+                        ]
+                    ));
+                }
             }
             $veiculo->save();
             Log::info("Vehicle {$veiculo->id} status updated to '{$veiculo->status_veiculo}'.");
