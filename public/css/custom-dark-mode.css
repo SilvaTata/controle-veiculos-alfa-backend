@@ -1,0 +1,418 @@
+.dark-mode .content-wrapper {
+    background-color: #161b2c;
+}
+[class*="sidebar-dark-"] {
+    background-color: #161b2c;
+}
+.dark-mode .navbar-white {
+    background-color: #161b2c;
+    color: #1f2d3d;
+}
+.navbar-light .navbar-nav .nav-link {
+    color: #dee2e6;
+}
+.card {
+    position: relative;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #8d8d8d;
+    background-clip: border-box;
+    border: 0 solid rgba(0, 0, 0, 0.125);
+    border-radius: 0.25rem;
+    color: #ffff;
+}
+
+.btn-custom {
+    background-color: #00d68f;
+}
+.btn-novo {
+    background-color: #1f2d3d;
+    color: #ffff;
+    margin: 5px;
+}
+
+.custom-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select {
+    width: 100%;
+    padding: 6px 40px 10px 10px;
+    font-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.custom-select option {
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+}
+
+.custom-select:focus {
+    outline: none;
+    border-color: #666;
+}
+
+.bustom-select {
+    width: 100%;
+    padding: 6px 40px 10px 10px;
+    font-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #fff;
+    color: rgb(118, 118, 118);
+    border: 1px solid rgb(134, 132, 132);
+    border-radius: 4px;
+    cursor: pointer;
+}
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 80px;
+    height: 40px;
+    cursor: pointer;
+}
+
+.toggle-switch input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-switch-background {
+    position: absolute;
+    top: 0;
+    left: 51px;
+    width: 86%;
+    height: 73%;
+    border-radius: 20px;
+    box-shadow: inset 0 0 0 2px #ccc;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.toggle-switch-handle {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 20px;
+    height: 20px;
+    background-color: #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease-in-out;
+}
+
+.toggle-switch::before {
+    content: "";
+    position: absolute;
+    top: -25px;
+    right: -35px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #aaa;
+    text-shadow: 1px 1px #fff;
+    transition: color 0.3s ease-in-out;
+}
+
+.toggle-switch input[type="checkbox"]:checked + .toggle-switch-handle {
+    transform: translateX(45px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), 0 0 0 3px #05c46b;
+}
+
+.toggle-switch input[type="checkbox"]:checked + .toggle-switch-background {
+    background-color: #05c46b;
+    box-shadow: inset 0 0 0 2px #04b360;
+}
+
+.toggle-switch input[type="checkbox"]:checked + .toggle-switch:before {
+    content: "On";
+    color: #05c46b;
+    right: -15px;
+}
+
+.toggle-switch
+    input[type="checkbox"]:checked
+    + .toggle-switch-background
+    .toggle-switch-handle {
+    transform: translateX(40px);
+}
+
+.carro1 {
+    color: #00d68f;
+}
+.carro2 {
+    color: crimson;
+}
+
+.bolinha1 {
+    color: #00d68f;
+}
+
+.bolinha2 {
+    color: crimson;
+}
+
+.info-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.vehicle-info {
+    flex: 1;
+}
+
+.qr-code-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-code-container img {
+    width: 200px;
+    height: auto;
+}
+
+.qr-code-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-code-container p {
+    margin-bottom: 10px;
+}
+
+.qr-code-container img {
+    width: 200px;
+    height: auto;
+}
+
+/* Estilização do card */
+.card {
+    border: 1px solid #6c757d;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(145deg, #1f2937, #2d3748);
+    color: #ffffff;
+}
+
+/* Títulos */
+.card h4 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #4a5568;
+    padding-bottom: 10px;
+    color: #63b3ed;
+}
+
+/* Labels */
+label {
+    color: #cbd5e0;
+    font-size: 0.95rem;
+}
+
+/* Inputs */
+input.form-control {
+    background-color: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 4px;
+    color: #e2e8f0;
+}
+
+input.form-control:focus {
+    border-color: #63b3ed;
+    box-shadow: 0 0 4px #63b3ed;
+}
+
+/* Botão */
+.btn-info {
+    background-color: #63b3ed;
+    border-color: #63b3ed;
+    color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.btn-info:hover {
+    background-color: #4299e1;
+    border-color: #4299e1;
+}
+
+/* Linhas */
+.row.mb-3 {
+    margin-bottom: 15px;
+}
+
+#direcao {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    left: 19px;
+}
+
+#direcao1 {
+    display: flex;
+    flex-direction: row;
+    position: relative;
+    left: 43px -1px;
+}
+
+/* Parágrafos */
+.card p {
+    color: #a0aec0;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.dark-mode .btn-secundary {
+    color: #ff3d71;
+    background-color: #2d243c;
+    border-color: #ff3d71;
+    box-shadow: none;
+    float: right;
+}
+.dark-mode .btn-secundary:hover {
+    color: #ff3d71;
+    background-color: #2d243c;
+    border-color: #ff3d71;
+    box-shadow: none;
+}
+
+.toast-success {
+    position: fixed; /* Fixa a posição do toast na tela */
+    top: 20px; /* Distância do topo da tela */
+    left: 55%; /* Centraliza horizontalmente */
+    transform: translateX(-55%); /* Centraliza horizontalmente */
+    z-index: 1050; /* Garante que o toast ficará acima de outros elementos */
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+/* Para mensagens de erro */
+.toast-error {
+    position: fixed; /* Fixa a posição do toast na tela */
+    top: 20px; /* Distância do topo da tela */
+    left: 55%; /* Centraliza horizontalmente */
+    transform: translateX(-55%); /* Centraliza horizontalmente */
+    z-index: 1050;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+.d-flex.justify-content-end {
+    margin-bottom: 15px;
+}
+
+.btn-success {
+    background-color: #4caf50;
+    border-color: #4caf50;
+    color: #fff;
+}
+
+/* Estilização para o título e alinhamento do botão */
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Botão "Exportar Todas em Excel" */
+.btn-success {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Espaço entre o ícone e o texto */
+    font-size: 1rem;
+    font-weight: bold;
+    background-color: #28a745; /* Cor verde padrão */
+    border: none;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-success:hover {
+    background-color: #218838; /* Cor verde mais escura no hover */
+    text-decoration: none;
+}
+
+/* Alerta de sucesso */
+.alert-success {
+    background-color: #28a745;
+    color: #ffffff;
+    border: none;
+}
+
+/* Estilo para mensagens temporárias */
+#message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.d-flex.justify-content-end {
+    margin-bottom: 10px; /* Reduz o espaço entre o botão e a tabela */
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th,
+table td {
+    text-align: center; /* Centraliza horizontalmente */
+    vertical-align: middle; /* Centraliza verticalmente */
+    /* padding: 8px; Adiciona espaçamento interno */
+    border: 1px solid #ddd; /* Adiciona borda */
+}
+
+.toggle-switch-background {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+#danger2 {
+    background-color: #dc3545;
+}
+
+.label1 {
+    position: relative;
+    left: 1rem;
+    font-size: 1.55rem;
+    top: 5px;
+}
+
+#motivo_recusado {
+    position: relative;
+    left: 1rem;
+    height: 2.75rem;
+}
+
+#teste {
+    box-shadow: none !important;
+}

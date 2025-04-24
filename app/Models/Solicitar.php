@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\HistSolicitar;
+use App\Models\HistVeiculo;
+use App\Models\User;
+
 
 class Solicitar extends Model
 {
@@ -21,8 +25,9 @@ class Solicitar extends Model
         'motivo',
         'situacao',
         'motivo_recusa',
-        'historico',
-        'hist_veiculo'
+        'adm_id',
+        'data_recusa',
+        'hora_recusa'
     ];
 
     public function user()
@@ -32,7 +37,7 @@ class Solicitar extends Model
 
     public function veiculo()
     {
-        return $this->belongsTo(Veiculo::class);
+        return $this->belongsTo(Veiculo::class, 'veiculo_id', 'id');
     }
 
     public function historico()
@@ -43,5 +48,10 @@ class Solicitar extends Model
     public function hist_veiculo()
     {
         return $this->hasOne(HistVeiculo::class, 'solicitacao_id');
+    }
+
+    public function adm()
+    {
+        return $this->belongsTo(User::class, 'adm_id');
     }
 }

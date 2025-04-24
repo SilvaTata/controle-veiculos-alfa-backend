@@ -1,0 +1,130 @@
+* {
+    font-family: "Poppins", sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 120vh;
+    background: url(/Img/Fundo2.png) center/cover;
+}
+
+/* Estilo para a mensagem de erro */
+.invalid-feedback {
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 8px;
+    margin-top: 8px;
+    font-size: 0.875rem;
+    display: block;
+    text-align: center;
+    border: 2px solid rgb(255, 0, 0);
+}
+
+/* Estilos gerais do container */
+.container {
+    background: rgba(0, 0, 0, 0);
+    width: 450px;
+    padding: 24px;
+    border-radius: 16px;
+    border: 5px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(25px);
+    box-shadow: 0px 0px 30px 20px rgba(225, 9, 9, 0.1);
+    color: rgb(255, 255, 255);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Ajuste para o input e select */
+.input-box,
+.custom-select-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%; /* Garante que todos os campos tenham a mesma largura */
+    position: relative;
+    margin-top: 20px;
+}
+
+/* Ajustes para todos os inputs */
+.input-box input,
+.custom-select {
+    width: 100%; /* Garante que todos os campos ocupem a largura total */
+    padding: 10px 16px 10px 38px; /* Ajuste para garantir conforto no campo */
+    border-radius: 99px;
+    border: 3px solid transparent;
+    background: rgba(250, 250, 250, 0.9);
+    outline: none;
+    caret-color: rgb(255, 4, 4);
+    color: rgb(14, 14, 14);
+    transition: 0.25s;
+}
+
+/* Foco nos campos de entrada */
+.input-box input:focus,
+.custom-select:focus {
+    border: 3px solid rgba(1, 3, 112, 0.25);
+}
+
+/* Cor do texto de placeholder */
+.input-box input::placeholder,
+.custom-select::placeholder {
+    color: rgba(0, 4, 4, 0.75);
+}
+
+/* Correção do layout para o ícone do campo de entrada */
+.input-box i {
+    position: absolute;
+    top: 50%;
+    left: 14px;
+    transform: translateY(-50%);
+    color: rgba(251, 28, 28, 0.75);
+    font-size: 18px;
+    transition: 0.25s;
+}
+
+/* Estilos para o botão de login */
+.button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.login-button {
+    display: block;
+    margin: 0 auto;
+    padding: 10px 20px;
+    background: #32cdd5;
+    color: rgb(1, 0, 0);
+    border: none;
+    border-radius: 50px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    width: 60%; /* O botão de login tem largura personalizada */
+    text-align: center;
+}
+
+.login-button:hover {
+    background: #28a3a8;
+    transform: scale(1.05);
+}
+
+/* Ajuste para inputs com erro */
+.input-box input.is-invalid {
+    border-color: rgb(255, 0, 0);
+    background-color: rgba(250, 250, 250, 0.9);
+}
+
+/* Garante que todos os campos de input não encolham */
+.input-box input,
+.custom-select {
+    box-sizing: border-box;
+}

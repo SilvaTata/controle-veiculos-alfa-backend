@@ -21,6 +21,7 @@ class Veiculo extends Model
         'capacidade',
         'obs_veiculo',
         'km_revisao',
+        'km_atual',
         'marca_id',
         'modelo_id',
         'hist_veiculo'

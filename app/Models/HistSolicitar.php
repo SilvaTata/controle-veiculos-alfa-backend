@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\User;
 
 class HistSolicitar extends Model
 {
@@ -27,5 +28,10 @@ class HistSolicitar extends Model
     public function solicitacao()
     {
         return $this->belongsTo(solicitar::class, 'solicitacao_id', 'id');
+    }
+
+    public function adm()
+    {
+        return $this->belongsTo(User::class, 'adm_id');
     }
 }
