@@ -31,6 +31,7 @@ Route::post('/marcas', [WebVeiculoController::class, 'marca'])->name('marcas.sto
 
 Route::post('/modelos', [WebVeiculoController::class, 'modelo'])->name('modelos.store')->middleware('auth');
 
+
 //SOLICITAÇÕES:
 Route::get('solicitar', [WebVeiculoController::class, 'solicitarIndex'])->name('solicitar.index')->middleware('auth');
 

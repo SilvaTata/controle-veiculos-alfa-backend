@@ -190,7 +190,7 @@
                         <div class="row mt-4 pt-3 border-top">
                             <div class="col-12 d-flex justify-content-end">
                                 <a href="{{ route('veiculos.index') }}" class="btn btn-secondary me-2">
-                                   <i class="fa fa-times me-1"></i> Cancelar
+                                    <i class="fa fa-times me-1"></i> Cancelar
                                 </a>
                                 <button type="submit" class="btn btn-success">
                                     <i class="fa fa-save me-1"></i> Cadastrar Veículo
@@ -204,10 +204,6 @@
     </div>
 </div>
 
-
-{{-- ====================================================================== --}}
-{{--                          MODAL NOVA MARCA                              --}}
-{{-- ====================================================================== --}}
 <div class="modal fade" id="modalNovaMarca" tabindex="-1" aria-labelledby="modalNovaMarcaLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <form method="POST" action="{{ route('marcas.store') }}" id="create-marca-form">
@@ -232,14 +228,7 @@
       </form>
     </div>
 </div>
-{{-- ====================================================================== --}}
-{{--                         FIM MODAL NOVA MARCA                           --}}
-{{-- ====================================================================== --}}
 
-
-{{-- ====================================================================== --}}
-{{--                          MODAL NOVO MODELO                             --}}
-{{-- ====================================================================== --}}
 <div class="modal fade" id="modalNovoModelo" tabindex="-1" aria-labelledby="modalNovoModeloLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       {{-- Formulário para criar novo modelo --}}
@@ -266,15 +255,11 @@
       </form>
     </div>
 </div>
-{{-- ====================================================================== --}}
-{{--                         FIM MODAL NOVO MODELO                          --}}
-{{-- ====================================================================== --}}
 
 
-{{-- Estilos Customizados --}}
 <style>
     .custom-card-header {
-        background-color: #2c3e50; /* Azul ardósia escuro */
+        background-color: #2c3e50; 
     }
     .btn-outline-primary.btn-sm.py-0 {
        line-height: 1.2;
@@ -283,7 +268,6 @@
     }
 </style>
 
-{{-- Script para fechar alertas --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const allAlerts = document.querySelectorAll('.alert-dismissible');

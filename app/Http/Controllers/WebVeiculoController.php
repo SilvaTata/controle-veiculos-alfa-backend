@@ -90,10 +90,7 @@ class WebVeiculoController extends Controller
                 'status_veiculo' => $validation['status_veiculo'],
             ]);
 
-            // --- Nova Lógica de QR Code ---
-            // Gera uma URL para uma rota que exibe detalhes do veículo (ou outra rota relevante)
-            // Usar route() é mais robusto que concatenar strings
-            $qrCodeUrl = route('veiculos.show', $veiculo->id); // Ou outra rota como 'api.qrcode.scan' se for o caso
+            $qrCodeUrl = route('api.qrcode.scan', $veiculo->id); 
             $qrcodeContent = QrCode::format('svg')
                 ->size(200)                 
                 ->margin(1) 
