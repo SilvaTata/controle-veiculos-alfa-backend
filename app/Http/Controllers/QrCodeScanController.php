@@ -28,6 +28,7 @@ class QrCodeScanController extends Controller
             ->whereDoesntHave('historico', function ($subQuery) {
                  $subQuery->whereNotNull('data_inicio');
             })
+            ->where('situacao', '=', 'aceita')
             ->orderBy('prev_data_inicio', 'asc') 
             ->orderBy('prev_hora_inicio', 'asc')
             ->first();

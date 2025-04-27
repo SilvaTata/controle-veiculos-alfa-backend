@@ -9,13 +9,10 @@ class WebNotificationController extends Controller
 {
     public function index()
     {
-        // Recupera o usuário autenticado
         $user = Auth::user();
 
-        // Recupera todas as notificações do usuário, incluindo lidas e não lidas
         $notifications = $user->notifications;
 
-        // Retorna as notificações para exibir na página
         return view('solicitar.notificacoes', compact('notifications'));
     }
 
