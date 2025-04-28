@@ -346,8 +346,12 @@ class WebSolicitarController extends Controller
         $solicitar = Solicitar::findOrFail($id);
 
         $solicitar->load(['user', 'veiculo.marca', 'adm', 'historico.adm','veiculo.modelo', 'historico', 'hist_veiculo']);
-
-        $userAdm = $solicitar->historico->adm->name;
+        
+        if ($solicitar->historico->urgente) {
+            $userAdm = "Urgente - Não há responsável";
+        } else { 
+            $userAdm = $solicitar->historico->adm->name;
+        }
 
         $html = view('solicitar.pdf', compact('solicitar', 'userAdm'))->render();
 
@@ -381,7 +385,7 @@ class WebSolicitarController extends Controller
             'A' => 'O.S', 'B' => 'Colaborador', 'C' => 'ID Colab.', 'D' => 'Email Colab.',
             'E' => 'Veículo', 'F' => 'Placa', 'G' => 'Data Prev. Retirada', 'H' => 'Hora Prev. Retirada',
             'I' => 'Data Prev. Devolução', 'J' => 'Hora Prev. Devolução', 'K' => 'Motivo Solicitação',
-            'L' => 'Responsável Aprovação', 'M' => 'Data Aceite', 'N' => 'Hora Aceite',
+            'L' => 'Responsável Aprovação', 'M' => 'Data Aceito', 'N' => 'Hora Aceito',
             'O' => 'Data Início Real', 'P' => 'Hora Início Real', 'Q' => 'Data Fim Real',
             'R' => 'Hora Fim Real', 'S' => 'KM Inicial', 'T' => 'KM Final', 'U' => 'KMs Rodados',
             'V' => 'Observações Finais',
@@ -404,19 +408,23 @@ class WebSolicitarController extends Controller
         $solicitacoes = Solicitar::with([
             'user', 'veiculo.marca', 'veiculo.modelo', 'adm', 'historico', 'hist_veiculo'
         ])->where('situacao', 'concluída')->orderBy('id')->get();
-
         
         $row = $dataRowStart;
         foreach ($solicitacoes as $sol) {
-            $userAdm = $sol->historico->adm->name;
-            // Usando ) e os nomes corretos das relações
             $histS = $sol->historico;
             $histV = $sol->hist_veiculo;
-            $adm = $userAdm; // Admin da tabela solicitars
             $veiculo = $sol->veiculo;
             $user = $sol->user;
             $marca = $veiculo->marca->marca;
             $modelo = $veiculo->modelo->modelo;
+            if ($sol->historico->urgente) {
+                $userAdm = "Urgente - Não há responsável";
+                $histS->data_aceito = null;
+                $histS->hora_aceito = null;
+            } else {
+                $userAdm = $sol->historico->adm->name;
+            }
+            $adm = $userAdm;
 
             $sheet->setCellValue('A' . $row, $sol->id);
             $sheet->setCellValue('B' . $row, $user->name);

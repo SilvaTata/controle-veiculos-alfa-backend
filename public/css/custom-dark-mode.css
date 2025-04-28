@@ -1,5 +1,11 @@
 .dark-mode .content-wrapper {
     background-color: #161b2c;
+    flex-grow: 1;
+}
+.dark-mode .wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* 100% da Altura da Viewport */
 }
 [class*="sidebar-dark-"] {
     background-color: #161b2c;

@@ -195,9 +195,5 @@
             </p>
         @endif
             @endif
-
-            <a class="btn btn-secondary" href="{{ route('solicitar.show', $solicitacao->id) }}"> 
-                <i class="fa fa-arrow-left me-1"></i> Voltar
-            </a>
         </div>
 @endsection

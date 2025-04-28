@@ -4,17 +4,27 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 <link rel="stylesheet" href="{{ asset('css/custom-dark-mode.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>    
+
+<script>   
+        setTimeout(() => {
+            const successMessage = document.getElementById("message");
+            if (successMessage) {
+                successMessage.style.transition = "opacity 0.5s ease";
+                successMessage.style.opacity = "0";
+                setTimeout(() => successMessage.remove(), 500);
+            }
+        }, 5000);
+    </script>
 
 @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show" id="message" role="alert">
         {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 @endif
 @if(session('error'))
     <div class="alert alert-danger alert-dismissible fade show" id="errorMessage" role="alert">
         {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 @endif
 
@@ -96,11 +106,31 @@
                     @if (auth()->user()->cargo_id == 1)
                         <a href="{{ route('veiculos.show', $veiculo->id) }}" class="btn btn-info btn-sm" title="Ver Detalhes"><i class="fa fa-eye"></i></a>
                         <a href="{{ route('veiculos.edit', $veiculo->id) }}" class="btn btn-warning btn-sm" title="Editar"><i class="fa fa-pencil"></i></a>
-                        <form action="{{ route('veiculos.destroy', $veiculo->id) }}" method="POST" style="display: inline-block" onsubmit="return confirm('Certeza que deseja excluir?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm" title="Excluir"><i class="fa fa-trash"></i></button>
-                        </form>
+                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalExcluir{{ $veiculo->id }}">
+                        <i class="fa fa-trash"></i>
+                    </button>
+
+                    <div class="modal fade" id="modalExcluir{{ $veiculo->id }}" tabindex="-1" aria-labelledby="modalExcluirLabel{{ $veiculo->id }}" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title w-100 text-center" id="modalExcluirLabel{{ $veiculo->id }}">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body text-center">
+                Tem certeza que deseja excluir este veículo?
+            </div>
+            <div class="modal-footer justify-content-center">
+                <form action="{{ route('veiculos.destroy', $veiculo->id) }}" method="POST" class="d-flex gap-2">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
                     @else
                         <a href="{{ route('veiculos.show', $veiculo->id) }}" class="btn btn-info btn-sm" title="Ver Detalhes"><i class="fa fa-eye"></i> Ver</a>
                     @endif

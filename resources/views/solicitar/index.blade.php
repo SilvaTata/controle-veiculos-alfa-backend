@@ -4,18 +4,7 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 <link rel="stylesheet" href="{{ asset('css/custom-dark-mode.css') }}">
 
-    <h1>Veículos Disponíveis</h1>
-    <form action="{{ route('solicitar.index') }}" method="GET">
-        <input class="btn btn-novo" name="search" placeholder="Buscar veículo" value="{{ request('search') }}">
-        <button type="submit" class="btn btn-novo">Buscar</button>
-    </form>
-
-    @if(session('error'))
-        <div class="alert alert-danger" id="message" role="alert">
-            {{ session('error') }}
-        </div>
-    @endif
-    <script>   
+<script>   
         setTimeout(() => {
             const successMessage = document.getElementById("message");
             if (successMessage) {
@@ -25,6 +14,38 @@
             }
         }, 5000);
     </script>
+
+    <h1>Veículos Disponíveis</h1>
+    <form action="{{ route('solicitar.index') }}" method="GET">
+        <input class="btn btn-novo" name="search" placeholder="Buscar veículo" value="{{ request('search') }}">
+        <button type="submit" class="btn btn-novo">Buscar</button>
+    </form>
+
+    @if(session('error'))
+    <div class="alert alert-danger" id="error-message" role="alert">
+        {{ session('error') }}
+    </div>
+@endif
+
+@if(session('success'))
+    <div class="alert alert-success" id="success-message" role="alert">
+        {{ session('success') }}
+    </div>
+@endif
+    <script>
+    setTimeout(() => {
+        const errorMessage = document.getElementById("error-message");
+        const successMessage = document.getElementById("success-message");
+
+        [errorMessage, successMessage].forEach((message) => {
+            if (message) {
+                message.style.transition = "opacity 0.5s ease";
+                message.style.opacity = "0";
+                setTimeout(() => message.remove(), 500);
+            }
+        });
+    }, 5000);
+</script>
 
 @stop
 

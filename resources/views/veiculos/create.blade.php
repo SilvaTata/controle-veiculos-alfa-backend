@@ -24,13 +24,11 @@
                         @if (session('error'))
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                 {{ session('error') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         @endif
                         @if (session('success'))
                              <div class="alert alert-success alert-dismissible fade show" role="alert">
                                 {{ session('success') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         @endif
                         @if ($errors->any())
@@ -41,7 +39,6 @@
                                         <li>{{ $error }}</li>
                                     @endforeach
                                 </ul>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>
                         @endif
 
@@ -198,12 +195,13 @@
                             </div>
                         </div>
                     </form> {{-- Fim do Formulário Principal --}}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                </div> {{-- Fim do card-body --}}
+            </div> {{-- Fim do card --}}
+        </div> {{-- Fim da Coluna --}}
+    </div> {{-- Fim da Row --}}
+</div> {{-- Fim do Container --}}
 
+{{-- Modals (Estrutura Inalterada) --}}
 <div class="modal fade" id="modalNovaMarca" tabindex="-1" aria-labelledby="modalNovaMarcaLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <form method="POST" action="{{ route('marcas.store') }}" id="create-marca-form">
@@ -216,7 +214,6 @@
           <div class="modal-body">
             <div class="mb-3">
               <label for="nomeMarca" class="form-label">Nome da Marca <span class="text-danger">*</span></label>
-              {{-- Controller ajustado para aceitar 'nome' e salvar em 'marca' --}}
               <input type="text" class="form-control" id="nomeMarca" name="nome" required placeholder="Ex: Chevrolet">
             </div>
           </div>
@@ -231,7 +228,6 @@
 
 <div class="modal fade" id="modalNovoModelo" tabindex="-1" aria-labelledby="modalNovoModeloLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      {{-- Formulário para criar novo modelo --}}
       <form method="POST" action="{{ route('modelos.store') }}" id="create-modelo-form">
         @csrf
         <div class="modal-content">
@@ -240,10 +236,8 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
           </div>
           <div class="modal-body">
-            {{-- Campo Nome do Modelo (dentro do modal) --}}
             <div class="mb-3">
               <label for="nomeModelo" class="form-label">Nome do Modelo <span class="text-danger">*</span></label>
-              {{-- Controller ajustado para aceitar 'nome' e salvar em 'modelo' --}}
               <input type="text" class="form-control" id="nomeModelo" name="nome" required placeholder="Ex: Onix">
             </div>
           </div>
@@ -256,10 +250,10 @@
     </div>
 </div>
 
-
+{{-- Estilos (Inalterado) --}}
 <style>
     .custom-card-header {
-        background-color: #2c3e50; 
+        background-color: #2c3e50;
     }
     .btn-outline-primary.btn-sm.py-0 {
        line-height: 1.2;
@@ -268,6 +262,7 @@
     }
 </style>
 
+{{-- Script de Alerta (Inalterado) --}}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const allAlerts = document.querySelectorAll('.alert-dismissible');
@@ -281,6 +276,7 @@
     });
 </script>
 
-@endsection
+{{-- Script Bootstrap JS (Movido para DENTRO da Seção) --}}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
+@endsection {{-- Fim da Seção de Conteúdo --}}
